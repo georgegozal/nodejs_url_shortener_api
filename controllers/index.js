@@ -39,7 +39,7 @@ exports.createNew = function(req, res, next) {
             return models.Urls.create({
                 original: req.body.url,
                 shortened: randomString
-            }).then(shortened => {
+            }).then(result => {
                 let url = `${baseUrl}/${result.shortened}`
                 // Returning the response as a JSON object
                 return res.status(201).json({
@@ -48,7 +48,7 @@ exports.createNew = function(req, res, next) {
                     data: {
                         original: req.body.url,
                         shortened: url,
-                        qrCode: qrUrl + result.randomString,
+                        qrCode: qrUrl + result.shortened,
                     }
                 });
             })
