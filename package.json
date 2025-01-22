@@ -12,6 +12,7 @@
     "http-errors": "~1.6.3",
     "morgan": "~1.9.1",
     "pug": "2.0.0-beta11",
+    "qrcode": "^1.5.4",
     "sequelize": "^6.37.5",
     "sqlite3": "^5.1.7"
   }

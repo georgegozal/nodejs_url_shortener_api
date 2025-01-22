@@ -1,6 +1,8 @@
+const QRCode = require('qrcode');
+const fs = require('fs');
 const models = require('../models')
 
-exports.go_website = function(req, res, next) {
+exports.goWebsite = function(req, res, next) {
     console.log(req.args, req.params)
     return models.Urls.findOne({
         where: {
@@ -9,11 +11,12 @@ exports.go_website = function(req, res, next) {
     }).then(result => {
         res.status(302).redirect(result.original)
     })
-
 }
 
-exports.create_new = function(req, res, next) {
+exports.createNew = function(req, res, next) {
     const baseUrl = req.protocol + '://' + req.get('host');
+
+    let qrUrl = baseUrl + "/qr/"
 
     models.Urls.findOne({
         where: {
@@ -21,12 +24,14 @@ exports.create_new = function(req, res, next) {
         }
     }).then(result => {
         if(result){
+            let url = `${baseUrl}/${result.shortened}`
             res.json({
                 success: true,
                 message: 'URL shortened successfully',
                 data: {
                     original: req.body.url,
-                    shortened: `${baseUrl}/${result.shortened}`
+                    shortened: url,
+                    qrCode: qrUrl + result.shortened,
                 }
             });
         } else {
@@ -35,80 +40,73 @@ exports.create_new = function(req, res, next) {
                 original: req.body.url,
                 shortened: randomString
             }).then(shortened => {
+                let url = `${baseUrl}/${result.shortened}`
                 // Returning the response as a JSON object
                 return res.status(201).json({
                     success: true,
                     message: 'URL shortened successfully',
                     data: {
                         original: req.body.url,
-                        shortened: `${baseUrl}/${randomString}`
+                        shortened: url,
+                        qrCode: qrUrl + result.randomString,
                     }
                 });
             })
         }
     })
-
-
-    // }).catch(error => {
-    //     // Handling errors and returning a JSON response in case of failure
-    //     return res.status(500).json({
-    //         success: false,
-    //         message: 'Error shortening the URL',
-    //         error: error.message
-    //     });
-    // });
 }
 
-exports.get_urls = function(req, res, next) {
+exports.getUrls = function(req, res, next) {
     return models.Urls.findAll().then(result => {
         return res.status(200).json({
             success: true,
             data: result.map(item => {
+                const baseUrl = req.protocol + '://' + req.get('host')
                 return {
                     'originalUrl': item.original,
-                    'shortenedUrl': `${req.protocol + '://' + req.get('host')}/${item.shortened}`,
-                    'createdAt': item.createdAt
+                    'shortenedUrl': `${baseUrl}/${item.shortened}`,
+                    'createdAt': item.createdAt,
+                    'qrCode': `${baseUrl}/qr/${item.shortened}`
                 }
             })
         });
     })
 }
 
-// Function to generate a random string with letters, numbers, and symbols
-// async function generateRandomString(length) {
-//     const charset = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+exports.getQrCode = function(req, res, next) {
+    // Construct the full URL
+    const fullUrl = req.protocol + '://' + req.get('host') + req.originalUrl;
 
-//     // Infinite loop to keep trying until a unique shortened string is generated
-//     while (true) {
-//         let result = '';
-//         for (let i = 0; i < length; i++) {
-//             const randomIndex = Math.floor(Math.random() * charset.length);
-//             result += charset[randomIndex];
-//         }
+    // Find the corresponding shortened URL from the database
+    models.Urls.findOne({
+        where: {
+            shortened: req.params.shortened
+        }
+    }).then(result => {
+        if (!result) {
+            // If no result is found, return 404
+            return res.status(404).json({ success: false, message: 'Shortened URL not found' });
+        }
 
-//         // Check if the generated shortened URL already exists in the database
-//         const existingRecord = await models.Urls.findOne({
-//             where: { shortened: result }
-//         })
+        // Generate QR code buffer from the full URL
+        QRCode.toBuffer(fullUrl, { type: 'jpg' }, (err, buffer) => {
+            if (err) {
+                // If there is an error generating the QR code, return 500
+                return res.status(500).json({ success: false, message: 'Error generating QR code', error: err.message });
+            }
 
-//         // If not found, return the result as it's unique
-//         if (!existingRecord) {
-//             return result;
-//         }
-//     }
-// }
+            // Set the appropriate header for the image
+            res.writeHead(200, { 'Content-Type': 'image/jpeg' });
 
-// // Example usage
-// async function getRandomString() {
-//     try {
-//         const shortened = await generateRandomString(5); // Get the unique shortened URL
-//         console.log('Generated unique shortened URL:', shortened);
-//         return shortened;
-//     } catch (error) {
-//         console.error('Error generating shortened URL:', error);
-//     }
-// }
-
+            // Send the QR code image buffer as the response
+            res.end(buffer);
+        });
+    }).catch(error => {
+        // Handle any database errors
+        console.error('Error finding shortened URL:', error);
+        return res.status(500).json({ success: false, message: 'Internal server error', error: error.message });
+    });
+}
 
 function getRandom(length) {
     const charset = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
