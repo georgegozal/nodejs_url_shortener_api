@@ -13,29 +13,50 @@ exports.go_website = function(req, res, next) {
 }
 
 exports.create_new = function(req, res, next) {
-    const randomString = getRandom(5);
-    const baseUrl = req.protocol + '://' + req.get('host')
-    return models.Urls.create({
-        original: req.body.url,
-        shortened: randomString
-    }).then(shortened => {
-        // Returning the response as a JSON object
-        return res.json({
-            success: true,
-            message: 'URL shortened successfully',
-            data: {
+    const baseUrl = req.protocol + '://' + req.get('host');
+
+    models.Urls.findOne({
+        where: {
+            original: req.body.url
+        }
+    }).then(result => {
+        if(result){
+            res.json({
+                success: true,
+                message: 'URL shortened successfully',
+                data: {
+                    original: req.body.url,
+                    shortened: `${baseUrl}/${result.shortened}`
+                }
+            });
+        } else {
+            const randomString = getRandom(5);
+            return models.Urls.create({
                 original: req.body.url,
-                shortened: `${baseUrl}/${randomString}`
-            }
-        });
-    }).catch(error => {
-        // Handling errors and returning a JSON response in case of failure
-        return res.status(500).json({
-            success: false,
-            message: 'Error shortening the URL',
-            error: error.message
-        });
-    });
+                shortened: randomString
+            }).then(shortened => {
+                // Returning the response as a JSON object
+                return res.json({
+                    success: true,
+                    message: 'URL shortened successfully',
+                    data: {
+                        original: req.body.url,
+                        shortened: `${baseUrl}/${randomString}`
+                    }
+                });
+            })
+        }
+    })
+
+
+    // }).catch(error => {
+    //     // Handling errors and returning a JSON response in case of failure
+    //     return res.status(500).json({
+    //         success: false,
+    //         message: 'Error shortening the URL',
+    //         error: error.message
+    //     });
+    // });
 }
 
 exports.get_urls = function(req, res, next) {
