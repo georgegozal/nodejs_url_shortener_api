@@ -60,13 +60,14 @@ exports.getUrls = function(req, res, next) {
     return models.Urls.findAll().then(result => {
         return res.status(200).json({
             success: true,
+            size: result.length,
             data: result.map(item => {
                 const baseUrl = req.protocol + '://' + req.get('host')
                 return {
-                    'originalUrl': item.original,
-                    'shortenedUrl': `${baseUrl}/${item.shortened}`,
-                    'createdAt': item.createdAt,
-                    'qrCode': `${baseUrl}/qr/${item.shortened}`
+                    originalUrl: item.original,
+                    shortenedUrl: `${baseUrl}/${item.shortened}`,
+                    createdAt: item.createdAt,
+                    qrCode: `${baseUrl}/qr/${item.shortened}`
                 }
             })
         });
