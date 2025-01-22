@@ -1,5 +1,4 @@
 const QRCode = require('qrcode');
-const fs = require('fs');
 const models = require('../models')
 
 exports.goWebsite = function(req, res, next) {
