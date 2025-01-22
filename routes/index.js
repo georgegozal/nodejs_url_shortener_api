@@ -12,6 +12,7 @@ router.get('/:shortened', controllers.go_website)
 
 router.post('/', controllers.create_new)
 
+router.get('/urls/list', controllers.get_urls)
 
 
 module.exports = router;
