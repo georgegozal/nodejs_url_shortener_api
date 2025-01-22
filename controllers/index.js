@@ -7,7 +7,7 @@ exports.go_website = function(req, res, next) {
             shortened: req.params.shortened
         }
     }).then(result => {
-        res.redirect(result.original)
+        res.status(302).redirect(result.original)
     })
 
 }
@@ -36,7 +36,7 @@ exports.create_new = function(req, res, next) {
                 shortened: randomString
             }).then(shortened => {
                 // Returning the response as a JSON object
-                return res.json({
+                return res.status(201).json({
                     success: true,
                     message: 'URL shortened successfully',
                     data: {
@@ -61,7 +61,7 @@ exports.create_new = function(req, res, next) {
 
 exports.get_urls = function(req, res, next) {
     return models.Urls.findAll().then(result => {
-        return res.json({
+        return res.status(200).json({
             success: true,
             data: result.map(item => {
                 return {
