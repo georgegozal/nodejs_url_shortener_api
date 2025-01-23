@@ -8,6 +8,9 @@ exports.goWebsite = function(req, res, next) {
             shortened: req.params.shortened
         }
     }).then(result => {
+        result.update({
+            visited: result.visited + 1
+        })
         res.status(302).redirect(result.original)
     })
 }
@@ -66,7 +69,8 @@ exports.getUrls = function(req, res, next) {
                     originalUrl: item.original,
                     shortenedUrl: `${baseUrl}/${item.shortened}`,
                     createdAt: item.createdAt,
-                    qrCode: `${baseUrl}/qr/${item.shortened}`
+                    qrCode: `${baseUrl}/qr/${item.shortened}`,
+                    visited: item.visited
                 }
             })
         });

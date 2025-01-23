@@ -16,6 +16,9 @@ module.exports = (sequelize, DataTypes) => {
     shortened: {
       type: DataTypes.STRING,
       allowNull: false
+    },
+    visited: {
+      type: DataTypes.INTEGER
     }
   }, {
     tableName: 'url_shortener'
